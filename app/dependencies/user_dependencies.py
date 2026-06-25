@@ -1,27 +1,33 @@
-from fastapi import HTTPException, status, Path
-from app.services.user_service import UserService
+from fastapi import HTTPException
+from app.data.users_db import users_db
 
-def get_user_or_404(user_id: int = Path(..., description="ID del usuario", gt=0)):
-    user = UserService.get_user_by_id(user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuario no encontrado"
-        )
-    return user
+ALLOWED_ROLES = ["admin", "support", "user"]
 
-def validate_unique_email(email: str):
-    user = UserService.get_user_by_email(email)
-    if user:
+
+def get_user_or_404(user_id: int):
+    for user in users_db:
+        if user["id"] == user_id:
+            return user
+
+    raise HTTPException(
+        status_code=404,
+        detail="Usuario no encontrado"
+    )
+
+
+def validate_role(role: str):
+    if role not in ALLOWED_ROLES:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El correo electrónico ya se encuentra registrado"
+            status_code=400,
+            detail="Rol no permitido"
         )
 
-def validate_allowed_role(role: str):
-    allowed_roles = ["admin", "user", "support"]
-    if role.lower() not in allowed_roles:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Rol no permitido. Roles válidos: {', '.join(allowed_roles)}"
-        )
+
+def validate_email_exists(email: str, exclude_user_id: int = None):
+    for user in users_db:
+        if user["email"] == email:
+            if exclude_user_id is None or user["id"] != exclude_user_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Correo electrónico duplicado"
+                )

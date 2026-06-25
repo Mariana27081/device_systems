@@ -1,63 +1,175 @@
-from app.data.users_db import users_db
-from app.schemas.user_schema import UserCreate, UserUpdate, UserUpdatePartial
+from typing import Optional
 
-class UserService:
-    
-    @staticmethod
-    def get_all_users(role: str = None, is_active: bool = None):
-        filtered = users_db
-        if role:
-            filtered = [u for u in filtered if u["role"].lower() == role.lower()]
-        if is_active is not None:
-            filtered = [u for u in filtered if u["is_active"] == is_active]
-        return filtered
+from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
 
-    @staticmethod
-    def get_user_by_id(user_id: int):
-        for user in users_db:
-            if user["id"] == user_id:
-                return user
-        return None
+from app.auth.security import get_password_hash
+from app.models.user_model import User
 
-    @staticmethod
-    def get_user_by_email(email: str):
-        for user in users_db:
-            if user["email"].lower() == email.lower():
-                return user
-        return None
 
-    @staticmethod
-    def create_user(user_data: UserCreate):
-        new_id = max([u["id"] for u in users_db], default=0) + 1
-        new_user = user_data.model_dump()
-        new_user["id"] = new_id
-        users_db.append(new_user)
-        return new_user
+def create_user(
+    db: Session,
+    user
+):
+    existing = (
+        db.query(User)
+        .filter(User.email == user.email)
+        .first()
+    )
 
-    @staticmethod
-    def update_user_complete(user_id: int, user_data: UserUpdate):
-        for index, user in enumerate(users_db):
-            if user["id"] == user_id:
-                updated = user_data.model_dump()
-                updated["id"] = user_id
-                users_db[index] = updated
-                return updated
-        return None
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El correo electrónico ya está registrado."
+        )
 
-    @staticmethod
-    def update_user_partial(user_id: int, user_data: UserUpdatePartial):
-        for index, user in enumerate(users_db):
-            if user["id"] == user_id:
-                update_data = user_data.model_dump(exclude_unset=True)
-                for key, value in update_data.items():
-                    users_db[index][key] = value
-                return users_db[index]
-        return None
+    new_user = User(
+        name=user.name,
+        email=user.email,
+        hashed_password=get_password_hash(user.password),
+        role=user.role,
+        is_active=user.is_active
+    )
 
-    @staticmethod
-    def delete_user(user_id: int):
-        for index, user in enumerate(users_db):
-            if user["id"] == user_id:
-                users_db.pop(index)
-                return True
-        return False
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return new_user
+
+
+def get_users(
+    db: Session,
+    role: Optional[str] = None,
+    is_active: Optional[bool] = None,
+    order_by: Optional[str] = None
+):
+    query = db.query(User)
+
+    if role:
+        query = query.filter(User.role == role)
+
+    if is_active is not None:
+        query = query.filter(User.is_active == is_active)
+
+    valid_orders = ["name", "created_at"]
+
+    if order_by:
+        if order_by not in valid_orders:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Campo de ordenamiento inválido."
+            )
+
+        if order_by == "name":
+            query = query.order_by(User.name)
+
+        elif order_by == "created_at":
+            query = query.order_by(User.created_at)
+
+    return query.all()
+
+
+def get_user_by_id(
+    db: Session,
+    user_id: int
+):
+    user = (
+        db.query(User)
+        .filter(User.id == user_id)
+        .first()
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usuario no encontrado."
+        )
+
+    return user
+
+
+def update_user(
+    db: Session,
+    user_id: int,
+    user_data
+):
+    user = get_user_by_id(db, user_id)
+
+    duplicate = (
+        db.query(User)
+        .filter(
+            User.email == user_data.email,
+            User.id != user_id
+        )
+        .first()
+    )
+
+    if duplicate:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El correo electrónico ya está registrado."
+        )
+
+    user.name = user_data.name
+    user.email = user_data.email
+    user.hashed_password = get_password_hash(user_data.password)
+    user.role = user_data.role
+    user.is_active = user_data.is_active
+
+    db.commit()
+    db.refresh(user)
+
+    return user
+
+
+def patch_user(
+    db: Session,
+    user_id: int,
+    user_data
+):
+    user = get_user_by_id(db, user_id)
+
+    update_data = user_data.model_dump(exclude_unset=True)
+
+    if "email" in update_data:
+        duplicate = (
+            db.query(User)
+            .filter(
+                User.email == update_data["email"],
+                User.id != user_id
+            )
+            .first()
+        )
+
+        if duplicate:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El correo electrónico ya está registrado."
+            )
+
+    if "password" in update_data:
+        update_data["hashed_password"] = get_password_hash(update_data["password"])
+        del update_data["password"]
+
+    for key, value in update_data.items():
+        setattr(user, key, value)
+
+    db.commit()
+    db.refresh(user)
+
+    return user
+
+
+def delete_user(
+    db: Session,
+    user_id: int
+):
+    user = get_user_by_id(db, user_id)
+
+    db.delete(user)
+    db.commit()
+
+    return {
+        "message": "Usuario eliminado correctamente."
+    }
