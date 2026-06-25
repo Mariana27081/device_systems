@@ -1,62 +1,90 @@
-# 🚀 EVOLUCIÓN DE DEVICE_SYSTEMS: API REST AVANZADA PARA LA GESTIÓN DE USUARIOS
+# device_systems API v3.0
 
-Bienvenidos a la documentación oficial de **device_systems**, una solución backend intermedia construida sobre el framework de alto rendimiento **FastAPI**. Este proyecto representa la evolución técnica de un servicio inicial de gestión hacia una arquitectura empresarial modular, robusta, testeable y autodocumentada.
+API REST para gestión de usuarios con FastAPI + SQLAlchemy + SQLite.
 
-El propósito principal de esta aplicación es gestionar de manera eficiente el recurso de usuarios (`/users`), aplicando una separación estricta de responsabilidades, inyección de dependencias y un control profesional de flujos de error y códigos de estado HTTP.
+## Estructura del proyecto
 
----
+![estructura](/device_systems/image.png)
 
-## 📋 ÍNDICE
-1. [Descripción General y Arquitectura](#-descripción-general-y-arquitectura)
-2. [Estructura del Proyecto (Separación de Responsabilidades)](#-estructura-del-proyecto-separación-de-responsabilidades)
-3. [Tecnologías Utilizadas](#-tecnologías-utilizadas)
-4. [Instalación, Configuración y Despliegue](#-instalación-configuración-y-despliegue)
-5. [Matriz Completa de Endpoints (CRUD)](#-matriz-completa-de-endpoints-crud)
-6. [Diseño y Ejemplos de Peticiones / Respuestas](#-diseño-y-ejemplos-de-peticiones--respuestas)
-7. [Inyección de Dependencias (`Depends()`)](#-inyección-de-dependencias-depends)
-8. [Estrategia de Manejo de Errores y Excepciones (`HTTPException`)](#-estrategia-de-manejo-de-errores-y-excepciones-httpexception)
-9. [Evidencias de Aprendizaje y Pruebas (Capturas)](#-evidencias-de-aprendizaje-y-pruebas-capturas)
-10. [Reflexión Final sobre la Evolución](#-reflexión-final-sobre-la-evolución)
+## Instalación
 
----
+```bash
+pip install -r requirements.txt
+```
 
-## 🏛️ DESCRIPCIÓN GENERAL Y ARQUITECTURA
+## Ejecución
 
-La API `device_systems` está diseñada bajo los principios de la **Arquitectura Limpia (Clean Architecture)** y **RESTful API Best Practices**. El sistema divide las tareas en capas lógicas independientes. 
+```bash
+uvicorn app.main:app --reload
+```
 
-Esto garantiza que la lógica de negocio (cómo se procesa un usuario) esté completamente aislada de la capa de transporte (cómo se reciben las peticiones HTTP), lo que facilita enormemente la migración futura a bases de datos reales o la implementación de pruebas unitarias automatizadas.
+## Documentación
 
----
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
 
-## 📂 ESTRUCTURA DEL PROYECTO (SEPARACIÓN DE RESPONSABILIDADES)
+## Endpoints disponibles
 
-El árbol de directorios del proyecto se organiza de forma vertical y limpia de la siguiente manera:
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | /users | Listar todos los usuarios (filtros: role, is_active, order_by) |
+| GET | /users/{id} | Consultar usuario por ID |
+| POST | /users | Crear nuevo usuario |
+| PUT | /users/{id} | Actualizar usuario completo |
+| PATCH | /users/{id} | Actualizar usuario parcialmente |
+| DELETE | /users/{id} | Eliminar usuario |
 
-```text
-device_systems/
-│── app/
-│   │── __init__.py                # Inicializador del paquete Python
-│   │── main.py                    # Punto de entrada de la aplicación y metadatos globales
-│   │
-│   │── data/
-│   │   │── __init__.py
-│   │   └── users_db.py            # Capa de Datos: Simulación persistente de BD en memoria RAM
-│   │
-│   │── dependencies/
-│   │   │── __init__.py
-│   │   └── user_dependencies.py   # Capa de Intercepción: Validaciones transversales con Depends()
-│   │
-│   │── routes/
-│   │   │── __init__.py
-│   │   └── user_routes.py         # Capa de Enrutamiento: Define endpoints, métodos HTTP y tags
-│   │
-│   │── schemas/
-│   │   │── __init__.py
-│   │   └── user_schema.py         # Capa de Validación: Modelos de Pydantic para entrada/salida
-│   │
-│   └── services/
-│       │── __init__.py
-│       └── user_service.py        # Capa de Negocio: Lógica interna del CRUD
-│
-│── requirements.txt               # Manifiesto de dependencias del ecosistema
-│── README.md                      # Manual técnico de la aplicación (Este archivo)
+## Query Parameters (GET /users)
+
+- `role`: Filtrar por rol (`admin`, `user`, `support`)
+- `is_active`: Filtrar por estado (`true` / `false`)
+- `order_by`: Ordenar por `name` o `created_at`
+
+## Roles válidos
+
+- `admin`
+- `user`
+- `support`
+
+## Códigos de respuesta
+
+| Situación | Código |
+|-----------|--------|
+| Usuario creado | 201 Created |
+| Consulta exitosa | 200 OK |
+| Actualización exitosa | 200 OK |
+| Eliminación exitosa | 200 OK |
+| Usuario no encontrado | 404 Not Found |
+| Email duplicado | 400 Bad Request |
+| Rol no permitido | 422 Unprocessable Entity |
+| Datos inválidos | 422 Unprocessable Entity |
+
+## Base de datos
+
+SQLite local: `device_systems.db` (creado automáticamente al iniciar).
+
+## Ejemplo de uso
+
+### Crear usuario
+```json
+POST /users
+{
+  "name": "Ana García",
+  "email": "ana@example.com",
+  "role": "admin",
+  "is_active": true
+}
+```
+
+### Filtrar usuarios activos con rol admin
+```
+GET /users?role=admin&is_active=true
+```
+
+### Actualización parcial
+```json
+PATCH /users/1
+{
+  "is_active": false
+}
+```
