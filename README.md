@@ -4,7 +4,7 @@ API REST para gestión de usuarios con FastAPI + SQLAlchemy + SQLite.
 
 ## Estructura del proyecto
 
-![estructura](/device_systems/image.png)
+![estructura](/device_systems/images/Estructure.png)
 
 ## Instalación
 
@@ -17,6 +17,10 @@ pip install -r requirements.txt
 ```bash
 uvicorn app.main:app --reload
 ```
+
+
+## captura del swagger iu
+![swagger](/device_systems/images/swagger.png)
 
 ## Documentación
 
@@ -63,28 +67,47 @@ uvicorn app.main:app --reload
 
 SQLite local: `device_systems.db` (creado automáticamente al iniciar).
 
+## tablas generadas
+![tablas](/device_systems/images/db-.png)
+
 ## Ejemplo de uso
 
-### Crear usuario
-```json
-POST /users
-{
-  "name": "Ana García",
-  "email": "ana@example.com",
-  "role": "admin",
-  "is_active": true
-}
-```
+* get 
 
-### Filtrar usuarios activos con rol admin
-```
-GET /users?role=admin&is_active=true
-```
+![get](/device_systems/images/get.png)
 
-### Actualización parcial
-```json
-PATCH /users/1
-{
-  "is_active": false
-}
-```
+* get id
+
+![getid](/device_systems/images/get_id.png)
+
+* post
+
+![post](/device_systems/images/post.png)
+
+* put 
+
+![put](/device_systems/images/put.png)
+
+* patch 
+
+![patch](/device_systems/images/patch.png)
+
+* delete 
+
+![delete](/device_systems/images/del.png)
+
+* erore controlado
+
+![errors](/device_systems/images/errors.png)
+
+## diferencias entre sqlalchemy vs schema pydantic
+
+SQLAlchemy interactúa con el motor de base de datos para guardar la información, mientras que Pydantic interactúa con el cliente HTTP para validar y limpiar los datos que entran y salen de la aplicación.
+
+## reflexion final
+El desarrollo e incremento modular de la plataforma device_systems representa un salto crítico en mi formación como desarrollador backend, pasando de un CRUD básico y plano de una sola entidad a un ecosistema de software interconectado, robusto y blindado bajo estándares profesionales de la industria.
+
+## Link del video
+
+
+https://youtu.be/QRuVcfRnnP0
