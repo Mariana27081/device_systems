@@ -1,62 +1,155 @@
-# 🚀 EVOLUCIÓN DE DEVICE_SYSTEMS: API REST AVANZADA PARA LA GESTIÓN DE USUARIOS
+# Device Systems API
 
-Bienvenidos a la documentación oficial de **device_systems**, una solución backend intermedia construida sobre el framework de alto rendimiento **FastAPI**. Este proyecto representa la evolución técnica de un servicio inicial de gestión hacia una arquitectura empresarial modular, robusta, testeable y autodocumentada.
+## Información del Proyecto
 
-El propósito principal de esta aplicación es gestionar de manera eficiente el recurso de usuarios (`/users`), aplicando una separación estricta de responsabilidades, inyección de dependencias y un control profesional de flujos de error y códigos de estado HTTP.
-
----
-
-## 📋 ÍNDICE
-1. [Descripción General y Arquitectura](#-descripción-general-y-arquitectura)
-2. [Estructura del Proyecto (Separación de Responsabilidades)](#-estructura-del-proyecto-separación-de-responsabilidades)
-3. [Tecnologías Utilizadas](#-tecnologías-utilizadas)
-4. [Instalación, Configuración y Despliegue](#-instalación-configuración-y-despliegue)
-5. [Matriz Completa de Endpoints (CRUD)](#-matriz-completa-de-endpoints-crud)
-6. [Diseño y Ejemplos de Peticiones / Respuestas](#-diseño-y-ejemplos-de-peticiones--respuestas)
-7. [Inyección de Dependencias (`Depends()`)](#-inyección-de-dependencias-depends)
-8. [Estrategia de Manejo de Errores y Excepciones (`HTTPException`)](#-estrategia-de-manejo-de-errores-y-excepciones-httpexception)
-9. [Evidencias de Aprendizaje y Pruebas (Capturas)](#-evidencias-de-aprendizaje-y-pruebas-capturas)
-10. [Reflexión Final sobre la Evolución](#-reflexión-final-sobre-la-evolución)
+API REST desarrollada con FastAPI para la gestión de usuarios, dispositivos y préstamos, implementando migraciones con Alembic, relaciones entre entidades mediante SQLAlchemy y consultas avanzadas.
 
 ---
 
-## 🏛️ DESCRIPCIÓN GENERAL Y ARQUITECTURA
+# Tecnologías Utilizadas
 
-La API `device_systems` está diseñada bajo los principios de la **Arquitectura Limpia (Clean Architecture)** y **RESTful API Best Practices**. El sistema divide las tareas en capas lógicas independientes. 
-
-Esto garantiza que la lógica de negocio (cómo se procesa un usuario) esté completamente aislada de la capa de transporte (cómo se reciben las peticiones HTTP), lo que facilita enormemente la migración futura a bases de datos reales o la implementación de pruebas unitarias automatizadas.
+* Python
+* FastAPI
+* SQLAlchemy
+* SQLite
+* Alembic
+* Pydantic
+* Swagger UI
 
 ---
 
-## 📂 ESTRUCTURA DEL PROYECTO (SEPARACIÓN DE RESPONSABILIDADES)
+# Enlace del Video de Sustentación
 
-El árbol de directorios del proyecto se organiza de forma vertical y limpia de la siguiente manera:
+(https://youtu.be/1okLCFRy-gQ)
+
+---
+
+# Evidencia 1. Inicialización de Alembic
+
+Se inicializó Alembic para administrar las migraciones de la base de datos.
+
+```bash
+alembic init alembic
+```
+
+### Evidencia
+
+![Inicialización Alembic](images/alembic.png)
+
+---
+
+# Evidencia 2. Creación de Migraciones
+
+Se generó la migración automáticamente a partir de los modelos definidos en el proyecto.
+
+```bash
+alembic revision --autogenerate -m "crear tablas"
+```
+
+### Evidencia
+
+![Creación de Migraciones](images/CreacionMigraciones.png)
+
+---
+
+# Evidencia 3. Aplicación de Migraciones
+
+Se aplicó la migración a la base de datos.
+
+```bash
+alembic upgrade head
+```
+
+### Evidencia
+
+![Aplicación de Migraciones](images/AplicacionMigraciones.png)
+
+---
+
+# Evidencia 4. Carpeta Generada por Alembic
+
+Se verifica la estructura creada por Alembic dentro del proyecto.
+
+### Evidencia
+
+![Carpeta Alembic](images/carpetaAlembic.png)
+
+---
+
+# Evidencia 5. Estructura de Tablas Generadas
+
+Se verifica la correcta creación de las tablas en la base de datos.
+
+### Tablas principales
+
+* users
+* devices
+* loans
+
+### Evidencia
+
+![Tablas Generadas](images/tablasCreadas.png)
+
+---
+
+# Evidencia 6. Swagger UI
+
+Se verifica el correcto funcionamiento de la documentación automática de FastAPI.
+
+### URL
 
 ```text
-device_systems/
-│── app/
-│   │── __init__.py                # Inicializador del paquete Python
-│   │── main.py                    # Punto de entrada de la aplicación y metadatos globales
-│   │
-│   │── data/
-│   │   │── __init__.py
-│   │   └── users_db.py            # Capa de Datos: Simulación persistente de BD en memoria RAM
-│   │
-│   │── dependencies/
-│   │   │── __init__.py
-│   │   └── user_dependencies.py   # Capa de Intercepción: Validaciones transversales con Depends()
-│   │
-│   │── routes/
-│   │   │── __init__.py
-│   │   └── user_routes.py         # Capa de Enrutamiento: Define endpoints, métodos HTTP y tags
-│   │
-│   │── schemas/
-│   │   │── __init__.py
-│   │   └── user_schema.py         # Capa de Validación: Modelos de Pydantic para entrada/salida
-│   │
-│   └── services/
-│       │── __init__.py
-│       └── user_service.py        # Capa de Negocio: Lógica interna del CRUD
-│
-│── requirements.txt               # Manifiesto de dependencias del ecosistema
-│── README.md                      # Manual técnico de la aplicación (Este archivo)
+http://127.0.0.1:8000/docs
+```
+
+### Evidencia
+
+![Swagger UI](images/swagger.png)
+
+---
+
+# Relaciones Implementadas
+
+## User - Loan
+
+Un usuario puede tener múltiples préstamos.
+
+```text
+User (1) -------- (N) Loan
+```
+
+## Device - Loan
+
+Un dispositivo puede estar asociado a múltiples préstamos a lo largo del tiempo.
+
+```text
+Device (1) -------- (N) Loan
+```
+
+---
+
+# Importancia de las Migraciones
+
+Las migraciones permiten controlar los cambios realizados en la estructura de la base de datos de forma organizada y segura. Gracias a Alembic es posible versionar el esquema de la base de datos, aplicar cambios de manera controlada y mantener consistencia entre los diferentes entornos de desarrollo.
+
+---
+
+# Importancia de las Relaciones
+
+Las relaciones entre entidades permiten representar situaciones reales dentro del sistema. En este proyecto, la relación entre usuarios, dispositivos y préstamos facilita la administración de los recursos y mantiene la integridad de los datos.
+
+---
+
+# Importancia de las Consultas Avanzadas
+
+Las consultas avanzadas mediante joins y filtros permiten obtener información consolidada de varias tablas, optimizando el acceso a los datos y mejorando el rendimiento de la aplicación.
+
+---
+
+# Conclusiones
+
+* Se implementó correctamente Alembic para el manejo de migraciones.
+* Se generaron y aplicaron migraciones exitosamente.
+* Se verificó la creación de las tablas en la base de datos.
+* Se validó el funcionamiento de Swagger UI.
+* Se fortalecieron los conocimientos sobre modelado relacional y consultas avanzadas en APIs REST.
