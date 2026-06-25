@@ -1,3 +1,4 @@
+# Simulación de una base de datos en memoria con datos iniciales
 users_db = [
     {
         "id": 1,
